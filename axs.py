@@ -21,7 +21,7 @@ class axs(Module):
         self.weight = Parameter(nw)
         ep = torch.empty_like(self.ep)
         ep.fill_(-0.1)
-        self.weight = Parameter(ep)
+        self.ep = Parameter(ep)
 
     def forward(self, input: Tensor) -> Tensor:
         grid = torch.stack(torch.meshgrid(torch.arange(0, 28), torch.arange(0, 28), indexing='xy'), dim=-1).unsqueeze(-2).unsqueeze(-2).repeat(1,1,28,28,1).to(self.pos2d.device)
