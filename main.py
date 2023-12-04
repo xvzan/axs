@@ -13,12 +13,12 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.axses = nn.Sequential(
-            axs(),
+            axs(x_in=28,y_in=28,x_out=11,y_out=12),
             # axs(),
             # axs(),
             # axs(),
             )
-        self.fc2 = nn.Linear(784, 10)
+        self.fc2 = nn.Linear(132, 10)
         self.fc2.weight.requires_grad_(False)
         self.fc2.bias.requires_grad_(False)
 
