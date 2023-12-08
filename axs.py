@@ -24,12 +24,7 @@ class axs(Module):
         self.ep = Parameter(torch.empty((self.y_out, self.x_out), **factory_kwargs))
         self.epf = nn.Sequential(
             nn.LogSigmoid(),
-            nn.RReLU(0.013, 0.017),
-        )
-        self.dis = Parameter(torch.empty((self.y_out, self.x_out), **factory_kwargs))
-        self.disf = nn.Sequential(
-            nn.RReLU(2., 2.3),
-            nn.Sigmoid(),
+            nn.RReLU(100, 110),
         )
         self.reset_parameters()
 
@@ -42,15 +37,12 @@ class axs(Module):
         ep = torch.empty_like(self.ep)
         ep.fill_(-0.1)
         self.ep = Parameter(ep)
-        dis = torch.empty_like(self.dis)
-        dis.fill_(-1.5)
-        self.dis = Parameter(dis)
 
     def forward(self, input: Tensor) -> Tensor:
         grid = torch.stack(torch.meshgrid(torch.linspace(0, self.x_end, steps=self.x_in), torch.linspace(0, self.y_end, steps=self.y_in), indexing='xy'), dim=-1).unsqueeze(-2).unsqueeze(-2).repeat(1,1,self.y_out,self.x_out,1).to(self.pos2d.device)
         exp_pos = grid - self.pos2d
         exp_dis_square = torch.sum(exp_pos**2, dim=-1)
-        exp = torch.where(exp_dis_square < self.disf(self.dis), torch.exp(self.epf(self.ep) * exp_dis_square), False) # 俺寻思可以去掉按距离筛选
+        exp = torch.exp(self.epf(self.ep) * exp_dis_square)
         weight = exp.permute(2,3,0,1).reshape(self.out_features,-1)
         i2d = input.reshape(input.size(0), -1).permute(1, 0)
         o21 = torch.matmul(weight, i2d)
