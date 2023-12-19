@@ -6,7 +6,7 @@ from torch.nn.modules.module import Module
 from torch.types import Number
 
 class axs(Module):
-    def __init__(self, x_in: int, y_in: int, x_out: int, y_out: int, device=None, dtype=None, x_end: Number = 1, y_end: Number = 1) -> None:
+    def __init__(self, x_in: int, y_in: int, x_out: int, y_out: int, device=None, dtype=None, x_end: Number = 1, y_end: Number = 1, random: bool = False) -> None:
         factory_kwargs = {'device': device, 'dtype': dtype}
         super().__init__()
         self.x_in = x_in
@@ -15,6 +15,7 @@ class axs(Module):
         self.y_out = y_out
         self.x_end = x_end
         self.y_end = y_end
+        self.random = random
         self.out_features = self.x_out * self.y_out
         self.pos2d = Parameter(torch.empty((self.y_out, self.x_out, 2), **factory_kwargs))
         self.weight = Parameter(torch.empty((self.y_out, self.x_out), **factory_kwargs))
@@ -29,7 +30,10 @@ class axs(Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        np2d = torch.stack(torch.meshgrid(torch.linspace(0, self.x_end, steps=self.x_out), torch.linspace(0, self.y_end, steps=self.y_out), indexing='xy'), dim=-1)
+        if self.random:
+            np2d = torch.stack(torch.meshgrid(torch.rand(self.x_out).mul(self.x_end), torch.rand(self.y_out).mul_(self.y_end), indexing='xy'), dim=-1)
+        else:
+            np2d = torch.stack(torch.meshgrid(torch.linspace(0, self.x_end, steps=self.x_out), torch.linspace(0, self.y_end, steps=self.y_out), indexing='xy'), dim=-1)
         self.pos2d = Parameter(np2d)
         nw = torch.empty_like(self.weight)
         nw.fill_(0.167)
