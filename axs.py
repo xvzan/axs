@@ -6,7 +6,7 @@ from torch.nn.modules.module import Module
 from torch.types import Number
 
 class axs(Module):
-    def __init__(self, x_in: int, y_in: int, x_out: int, y_out: int, device=None, dtype=None, x_end: Number = 1, y_end: Number = 1, random: bool = False) -> None:
+    def __init__(self, x_in: int, y_in: int, x_out: int, y_out: int, device=None, dtype=None, x_end: Number = 1, y_end: Number = 1, random: bool = False, hs_lambd: Number = 0.5) -> None:
         factory_kwargs = {'device': device, 'dtype': dtype}
         super().__init__()
         self.x_in = x_in
@@ -16,6 +16,7 @@ class axs(Module):
         self.x_end = x_end
         self.y_end = y_end
         self.random = random
+        self.hs = nn.Hardshrink(lambd=hs_lambd)
         self.out_features = self.x_out * self.y_out
         self.pos2d = Parameter(torch.empty((self.y_out, self.x_out, 2), **factory_kwargs))
         self.weight = Parameter(torch.empty((self.y_out, self.x_out), **factory_kwargs))
@@ -46,7 +47,7 @@ class axs(Module):
         grid = torch.stack(torch.meshgrid(torch.linspace(0, self.x_end, steps=self.x_in), torch.linspace(0, self.y_end, steps=self.y_in), indexing='xy'), dim=-1).unsqueeze(-2).unsqueeze(-2).repeat(1,1,self.y_out,self.x_out,1).to(self.pos2d.device)
         exp_pos = grid - self.pos2d
         exp_dis_square = torch.sum(exp_pos**2, dim=-1)
-        exp = torch.exp(self.epf(self.ep) * exp_dis_square)
+        exp = self.hs(torch.exp(self.epf(self.ep) * exp_dis_square))
         weight = exp.permute(2,3,0,1).reshape(self.out_features,-1)
         i2d = input.reshape(input.size(0), -1).permute(1, 0)
         o21 = torch.matmul(weight, i2d)
