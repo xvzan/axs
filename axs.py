@@ -45,9 +45,9 @@ class axs(Module):
 
     def forward(self, input: Tensor) -> Tensor:
         grid = torch.stack(torch.meshgrid(torch.linspace(0, self.x_end, steps=self.x_in), torch.linspace(0, self.y_end, steps=self.y_in), indexing='xy'), dim=-1).unsqueeze(-2).unsqueeze(-2).repeat(1,1,self.y_out,self.x_out,1).to(self.pos2d.device)
-        exp_pos = grid - self.pos2d
-        exp_dis_square = torch.sum(exp_pos**2, dim=-1)
-        exp = self.hs(torch.exp(self.epf(self.ep) * exp_dis_square))
+        grid_pos = grid - self.pos2d
+        grid_norm = torch.norm(grid_pos, p=2, dim=-1)
+        exp = torch.exp(self.epf(self.ep) * grid_norm)
         weight = exp.permute(2,3,0,1).reshape(self.out_features,-1)
         i2d = input.reshape(input.size(0), -1).permute(1, 0)
         o21 = torch.matmul(weight, i2d)
